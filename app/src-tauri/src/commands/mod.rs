@@ -114,6 +114,35 @@ pub fn generate_document_pdf(
             let client = crate::database::clients::get_client_by_id(&conn, quote.client_id)?;
             crate::pdf::generate_quote_pdf(&settings, &client, &quote)
         }
+        "receipt" => {
+            // id here is payment_id, not invoice_id
+            let payment = conn.query_row(
+                "SELECT id, invoice_id, number, amount, payment_method, payment_date, notes, created_at
+                 FROM payments WHERE id = ?1",
+                rusqlite::params![id],
+                |row| Ok(crate::models::payment::Payment {
+                    id: row.get(0)?,
+                    invoice_id: row.get(1)?,
+                    number: row.get(2)?,
+                    amount: row.get(3)?,
+                    payment_method: row.get(4)?,
+                    payment_date: row.get(5)?,
+                    notes: row.get(6)?,
+                    created_at: row.get(7)?,
+                }),
+            ).map_err(|e| format!("Payment not found: {e}"))?;
+
+            let invoice = crate::database::invoices::get_invoice_detail(&conn, payment.invoice_id)?;
+            let client = crate::database::clients::get_client_by_id(&conn, invoice.client_id)?;
+
+            let total_paid: i64 = conn.query_row(
+                "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE invoice_id = ?1",
+                rusqlite::params![payment.invoice_id],
+                |row| row.get(0),
+            ).map_err(|e| format!("Sum error: {e}"))?;
+
+            crate::pdf::generate_receipt_pdf(&settings, &client, &invoice, &payment, total_paid)
+        }
         _ => Err(format!("Unknown document type: {doc_type}")),
     }
 }

@@ -2,7 +2,7 @@ use rusqlite::{params, Connection};
 
 use crate::models::payment::*;
 
-fn next_receipt_number(conn: &Connection) -> Result<String, String> {
+pub fn next_receipt_number(conn: &Connection) -> Result<String, String> {
     let year = conn
         .query_row("SELECT strftime('%Y', 'now')", [], |row| {
             row.get::<_, String>(0)
@@ -54,6 +54,27 @@ fn recalc_amount_paid(conn: &Connection, invoice_id: i64) -> Result<i64, String>
     }
 
     Ok(total_paid)
+}
+
+pub fn get_payment_by_id(conn: &Connection, id: i64) -> Result<Payment, String> {
+    conn.query_row(
+        "SELECT id, invoice_id, number, amount, payment_method, payment_date, notes, created_at
+         FROM payments WHERE id = ?1",
+        params![id],
+        |row| {
+            Ok(Payment {
+                id: row.get(0)?,
+                invoice_id: row.get(1)?,
+                number: row.get(2)?,
+                amount: row.get(3)?,
+                payment_method: row.get(4)?,
+                payment_date: row.get(5)?,
+                notes: row.get(6)?,
+                created_at: row.get(7)?,
+            })
+        },
+    )
+    .map_err(|e| format!("Payment not found: {e}"))
 }
 
 pub fn get_payments_for_invoice(

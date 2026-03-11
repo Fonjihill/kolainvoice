@@ -1,0 +1,27 @@
+# Claude
+.claude/
+
+# Documentation & design (external)
+docs/
+maquette/
+design-system/
+
+# Spec documents
+kola-fonctionnel.docx
+kola-workflow.docx
+kola-technique.docx
+kola-updates (1).docx
+
+# Firebase
+firebase-debug.log
+
+# Node
+app/node_modules/
+app/dist/
+
+# Rust / Tauri
+app/src-tauri/target/
+
+# OS
+.DS_Store
+Thumbs.db

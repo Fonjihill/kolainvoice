@@ -5,6 +5,12 @@ use crate::models::payment::*;
 use crate::AppState;
 
 #[tauri::command]
+pub fn get_payment_by_id(state: State<AppState>, id: i64) -> Result<Payment, String> {
+    let conn = state.db.lock().map_err(|e| format!("Lock error: {e}"))?;
+    database::payments::get_payment_by_id(&conn, id)
+}
+
+#[tauri::command]
 pub fn get_payments_for_invoice(
     state: State<AppState>,
     invoice_id: i64,

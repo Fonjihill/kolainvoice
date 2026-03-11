@@ -1,0 +1,31 @@
+[package]
+name = "kola-invoice"
+version = "1.0.0"
+description = "Application de facturation desktop pour le marché camerounais"
+authors = ["Fonji Terence"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "kola_invoice_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.10.3", features = ["protocol-asset"] }
+tauri-plugin-log = "2"
+rusqlite = { version = "0.34", features = ["bundled"] }
+tauri-plugin-dialog = "2.6.0"
+tauri-plugin-fs = "2.4.5"
+tauri-plugin-shell = "2.3.5"
+open = "5.3.3"
+genpdf = { version = "0.2.0", features = ["hyphenation", "images"] }
+image = "0.23"

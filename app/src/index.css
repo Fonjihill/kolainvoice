@@ -1,0 +1,496 @@
+@import "@fontsource/dm-serif-display/400.css";
+@import "@fontsource/dm-sans/400.css";
+@import "@fontsource/dm-sans/500.css";
+@import "@fontsource/dm-sans/600.css";
+@import "@fontsource/dm-sans/700.css";
+@import "@fontsource/dm-mono/400.css";
+@import "@fontsource/dm-mono/500.css";
+
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "DM Serif Display", serif;
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+}
+
+body {
+  font-family: "DM Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #FAFAFA;
+  color: #1C1917;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Shared button styles matching mockup ── */
+.btn-primary {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  background: #F59E0B;
+  color: #1C1917;
+}
+.btn-primary:hover { background: #D97706; }
+
+.btn-secondary {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  background: #FFFFFF;
+  color: #44403C;
+  border: 1px solid #D6D3D1;
+}
+.btn-secondary:hover { background: #F5F5F4; }
+
+.btn-ghost {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  background: transparent;
+  color: #78716C;
+  border: 1px solid transparent;
+}
+.btn-ghost:hover { background: #F5F5F4; }
+
+.btn-danger {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #DC2626;
+}
+.btn-danger:hover { background: #fee2e2; }
+
+.btn-sm {
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
+/* ── Form section title (amber underline) ── */
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #B45309;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #FDE68A;
+}
+
+/* ── Form input ── */
+.form-input {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #1C1917;
+  background: #FFFFFF;
+  border: 1px solid #D6D3D1;
+  padding: 8px 11px;
+  outline: none;
+  width: 100%;
+  transition: border 0.15s;
+}
+.form-input:focus { border-color: #F59E0B; }
+.form-input[readonly] { background: #F5F5F4; color: #78716C; cursor: default; }
+textarea.form-input { resize: vertical; min-height: 70px; }
+select.form-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A8A29E'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+/* ── Badge ── */
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* ── Stat label ── */
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #A8A29E;
+  margin-bottom: 6px;
+}
+
+/* ── Lines table (invoice/quote) ── */
+.lines-table { width: 100%; border-collapse: collapse; border: 1px solid #E7E5E4; }
+.lines-table th {
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #78716C;
+  background: #F5F5F4;
+  border-bottom: 1px solid #E7E5E4;
+  text-align: left;
+}
+.lines-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #F5F5F4;
+  font-size: 13px;
+  vertical-align: middle;
+}
+.lines-table td .form-input {
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+.lines-table td .form-input:focus {
+  background: #FFFBEB;
+  border-bottom: 1px solid #F59E0B;
+}
+.lines-table tr:last-child td { border-bottom: none; }
+
+/* ════════════════════════════════════════════════
+   Print / PDF styles
+   ════════════════════════════════════════════════ */
+
+.print-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #44403C;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 72px 24px 24px;
+}
+
+.print-page {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  padding: 32px 40px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.12);
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #1C1917;
+}
+
+/* Toolbar */
+.print-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #1C1917;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.print-toolbar-btn {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border: 1px solid #57534E;
+  background: #292524;
+  color: #E7E5E4;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.print-toolbar-btn:hover { background: #44403C; }
+.print-toolbar-btn.primary {
+  background: #F59E0B;
+  color: #1C1917;
+  border-color: #F59E0B;
+}
+.print-toolbar-btn.primary:hover { background: #D97706; }
+.print-toolbar-btn.primary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.print-toolbar-btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #A8A29E;
+}
+.print-toolbar-btn.ghost:hover { color: #E7E5E4; }
+
+/* Watermark */
+.print-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-35deg);
+  font-size: 80px;
+  font-weight: 900;
+  color: rgba(245, 158, 11, 0.08);
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Header */
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #F59E0B;
+}
+
+.print-company-name {
+  font-family: "DM Serif Display", serif;
+  font-size: 22px;
+  color: #1C1917;
+  margin-bottom: 6px;
+}
+.print-company-line {
+  font-size: 11px;
+  color: #78716C;
+  line-height: 1.6;
+}
+
+.print-doc-title-block { text-align: right; }
+.print-doc-title {
+  font-family: "DM Serif Display", serif;
+  font-size: 28px;
+  color: #B45309;
+  letter-spacing: 0.04em;
+}
+.print-doc-number {
+  font-family: "DM Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #44403C;
+  margin-top: 2px;
+}
+.print-doc-status {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  margin-top: 6px;
+  background: #F5F5F4;
+  color: #78716C;
+}
+.print-doc-status[data-status="paid"] { background: #DCFCE7; color: #16A34A; }
+.print-doc-status[data-status="sent"] { background: #DBEAFE; color: #2563EB; }
+.print-doc-status[data-status="cancelled"] { background: #FEE2E2; color: #DC2626; }
+.print-doc-status[data-status="accepted"] { background: #DCFCE7; color: #16A34A; }
+.print-doc-status[data-status="refused"] { background: #FEE2E2; color: #DC2626; }
+.print-doc-status[data-status="expired"] { background: #FEF3C7; color: #D97706; }
+
+/* Info row */
+.print-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.print-info-box {
+  background: #FAFAF9;
+  border: 1px solid #E7E5E4;
+  padding: 14px 16px;
+}
+.print-info-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #A8A29E;
+  margin-bottom: 4px;
+}
+.print-info-value { font-size: 12px; color: #44403C; line-height: 1.5; }
+.print-info-value.bold { font-weight: 700; color: #1C1917; }
+.print-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Quote object */
+.print-object {
+  font-size: 13px;
+  color: #44403C;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  background: #FFFBEB;
+  border-left: 3px solid #F59E0B;
+}
+.print-object-label {
+  font-weight: 700;
+  color: #B45309;
+}
+
+/* Lines table */
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+.print-th {
+  padding: 8px 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #78716C;
+  background: #F5F5F4;
+  border-bottom: 2px solid #E7E5E4;
+  text-align: left;
+}
+.print-th.center { text-align: center; }
+.print-th.right { text-align: right; }
+
+.print-td {
+  padding: 9px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #F5F5F4;
+}
+.print-td.center { text-align: center; }
+.print-td.right { text-align: right; }
+.print-td.mono { font-family: "DM Mono", monospace; font-size: 11px; }
+.print-td.bold { font-weight: 700; }
+
+/* Totals */
+.print-totals-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+.print-totals { width: 280px; }
+.print-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 12px;
+  color: #44403C;
+  border-bottom: 1px solid #F5F5F4;
+}
+.print-total-row .mono { font-family: "DM Mono", monospace; font-size: 11px; }
+.print-total-row.main {
+  font-weight: 800;
+  font-size: 14px;
+  color: #1C1917;
+  border-bottom: 2px solid #F59E0B;
+  padding: 8px 0;
+}
+.print-total-row.main .mono { font-size: 13px; }
+.print-total-row.paid { color: #16A34A; }
+.print-total-row.due { color: #DC2626; font-weight: 700; }
+
+/* Notes */
+.print-notes {
+  background: #FAFAF9;
+  border: 1px solid #E7E5E4;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.print-notes-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #A8A29E;
+  margin-bottom: 6px;
+}
+.print-notes-text { font-size: 11px; color: #44403C; line-height: 1.6; white-space: pre-wrap; }
+
+/* Bank */
+.print-bank {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid #E7E5E4;
+}
+.print-bank-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #A8A29E;
+  margin-bottom: 6px;
+}
+.print-bank-line { font-size: 11px; color: #44403C; line-height: 1.6; }
+
+/* Mentions */
+.print-mentions {
+  font-size: 10px;
+  color: #A8A29E;
+  font-style: italic;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #E7E5E4;
+}
+
+/* Footer */
+.print-footer {
+  position: absolute;
+  bottom: 24px;
+  left: 40px;
+  right: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 9px;
+  color: #A8A29E;
+  border-top: 1px solid #E7E5E4;
+  padding-top: 10px;
+}
+
+/* ── @media print — hide app, show only document ── */
+@media print {
+  /* Hide everything except the print page */
+  body > #root > * { display: none !important; }
+  .print-overlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; }
+  .print-page { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
+  .no-print { display: none !important; }
+  .print-watermark { color: rgba(245, 158, 11, 0.06) !important; }
+  .print-footer { position: fixed; bottom: 0; }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}

@@ -2,7 +2,8 @@
 .claude/
 
 # Documentation & design (external)
-docs/
+docs/*
+!docs/plans/
 maquette/
 design-system/
 

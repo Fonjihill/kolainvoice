@@ -28,6 +28,8 @@
         { "path": "$TEMP/**" }
       ]
     },
-    "core:path:default"
+    "core:path:default",
+    "updater:default",
+    "process:default"
   ]
 }

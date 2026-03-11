@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSettings } from "../hooks/useSettings";
 import { useToast } from "../hooks/useToast";
 import { Topbar } from "../App";
@@ -19,6 +19,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLicense } from "../hooks/useLicense";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 
 const TABS: { key: string; icon: LucideIcon; label: string }[] = [
   { key: "entreprise", icon: Building2, label: "Entreprise" },
@@ -454,20 +456,105 @@ function SauvegardePanel({ form, update, counts }: PanelProps & { counts: DataCo
 }
 
 function MisesAJourPanel({ form, update }: PanelProps) {
+  const [checking, setChecking] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState<{ version: string; body: string } | null>(null);
+  const [installing, setInstalling] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [noUpdate, setNoUpdate] = useState(false);
+  const updateRef = useRef<Update | null>(null);
+  const totalBytesRef = useRef<number>(0);
+  const downloadedBytesRef = useRef<number>(0);
+
+  async function checkForUpdates() {
+    setChecking(true);
+    setNoUpdate(false);
+    setUpdateAvailable(null);
+    try {
+      const upd = await check();
+      if (upd) {
+        updateRef.current = upd;
+        setUpdateAvailable({ version: upd.version, body: upd.body ?? "" });
+      } else {
+        setNoUpdate(true);
+      }
+    } catch (_e) {
+      setNoUpdate(true);
+    }
+    setChecking(false);
+  }
+
+  async function installUpdate() {
+    if (!updateRef.current) return;
+    setInstalling(true);
+    setProgress("Telechargement...");
+    try {
+      totalBytesRef.current = 0;
+      downloadedBytesRef.current = 0;
+      await updateRef.current.downloadAndInstall((event) => {
+        if (event.event === "Started") {
+          totalBytesRef.current = event.data.contentLength ?? 0;
+          downloadedBytesRef.current = 0;
+          setProgress("Telechargement en cours...");
+        } else if (event.event === "Progress") {
+          downloadedBytesRef.current += event.data.chunkLength;
+          if (totalBytesRef.current > 0) {
+            const pct = Math.round((downloadedBytesRef.current / totalBytesRef.current) * 100);
+            setProgress(`Telechargement... ${pct}%`);
+          }
+        } else if (event.event === "Finished") {
+          setProgress("Installation...");
+        }
+      });
+      await relaunch();
+    } catch (e) {
+      setProgress(`Erreur: ${e}`);
+      setInstalling(false);
+    }
+  }
+
   return (
     <>
       <div className="section-title">Mises a jour</div>
-      <div className="flex justify-between items-center bg-amber-100 border border-amber-400 p-3.5 mb-5">
-        <div>
-          <div className="text-[13px] font-bold text-amber-700">Version 1.1.0 disponible</div>
-          <div className="text-[12px] text-stone-600 mt-0.5">PDF ameliore · Correction numerotation</div>
+
+      {updateAvailable && (
+        <div className="flex justify-between items-center bg-amber-100 border border-amber-400 p-3.5 mb-5">
+          <div>
+            <div className="text-[13px] font-bold text-amber-700">
+              Version {updateAvailable.version} disponible
+            </div>
+            {updateAvailable.body && (
+              <div className="text-[12px] text-stone-600 mt-0.5">{updateAvailable.body}</div>
+            )}
+          </div>
+          <button
+            className="btn-primary"
+            onClick={installUpdate}
+            disabled={installing}
+          >
+            {installing ? progress : "Installer"}
+          </button>
         </div>
-        <button className="btn-primary">Installer</button>
-      </div>
+      )}
+
+      {noUpdate && (
+        <div className="bg-green-50 border border-green-500 p-3.5 mb-5">
+          <div className="text-[13px] font-bold text-green-700">Vous etes a jour !</div>
+        </div>
+      )}
+
       <div className="mb-4">
         <div className="text-[10px] font-bold tracking-wider uppercase text-stone-400">Version actuelle</div>
         <div className="font-mono text-[22px] font-semibold mt-1">1.0.0</div>
       </div>
+
+      <button
+        className="btn-primary mb-5"
+        onClick={checkForUpdates}
+        disabled={checking}
+      >
+        {checking ? "Verification..." : "Verifier les mises a jour"}
+      </button>
+
       {[
         { key: "update_auto_check" as const, label: "Verifier automatiquement", desc: "Au demarrage si internet disponible" },
         { key: "update_notify" as const, label: "Bandeau de notification", desc: "Non bloquant, jamais force" },
@@ -498,7 +585,6 @@ function LicencePanel() {
 
   const isActive = status?.state === "active";
   const isTrial = status?.state === "trial";
-  const isExpired = status?.state === "expired";
 
   async function handleCopyDeviceId() {
     if (!status?.device_id) return;

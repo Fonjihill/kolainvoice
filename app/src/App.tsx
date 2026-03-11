@@ -22,7 +22,10 @@ import QuotesPage from "./pages/Quotes";
 import QuoteFormPage from "./pages/QuoteForm";
 import DashboardPage from "./pages/Dashboard";
 import OnboardingPage from "./pages/Onboarding";
+import LicenseGatePage from "./pages/LicenseGate";
 import { getSettings } from "./api/settings";
+import { getLicenseStatus } from "./api/license";
+import { useLicense } from "./hooks/useLicense";
 
 // ─── Types ───────────────────────────────────────
 export type Screen =
@@ -80,12 +83,28 @@ function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [params, setParams] = useState<Record<string, unknown>>({});
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [licenseState, setLicenseState] = useState<"loading" | "trial" | "active" | "expired">("loading");
+  const [trialDays, setTrialDays] = useState<number>(0);
+  const [showLicenseGate, setShowLicenseGate] = useState(false);
 
   useEffect(() => {
     getSettings()
       .then((s) => setNeedsOnboarding(!s.company_name))
       .catch(() => setNeedsOnboarding(true));
   }, []);
+
+  useEffect(() => {
+    if (needsOnboarding === false) {
+      getLicenseStatus()
+        .then((s) => {
+          setLicenseState(s.state as "trial" | "active" | "expired");
+          if (s.trial_days_remaining) setTrialDays(s.trial_days_remaining);
+          // Pre-load license store
+          useLicense.getState().fetch();
+        })
+        .catch(() => setLicenseState("expired"));
+    }
+  }, [needsOnboarding]);
 
   function navigate(target: string, p?: Record<string, unknown>) {
     setScreen(target as Screen);
@@ -111,8 +130,47 @@ function App() {
     );
   }
 
+  if (licenseState === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-stone-50">
+        <div className="text-stone-400 text-sm">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (licenseState === "expired" || showLicenseGate) {
+    return (
+      <>
+        <Toaster />
+        <LicenseGatePage
+          onActivated={() => {
+            setLicenseState("active");
+            setShowLicenseGate(false);
+          }}
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden">
+      {/* Trial banner */}
+      {licenseState === "trial" && (
+        <div className="bg-amber-500/10 text-amber-600 text-xs py-1 px-4 flex items-center justify-between shrink-0">
+          <span>
+            Essai gratuit : {trialDays} jour{trialDays > 1 ? "s" : ""} restant{trialDays > 1 ? "s" : ""}
+          </span>
+          <button
+            onClick={() => setShowLicenseGate(true)}
+            className="text-amber-600 hover:text-amber-700 font-semibold cursor-pointer flex items-center gap-0.5"
+          >
+            Acheter une licence
+            <span className="text-[10px]">&rarr;</span>
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
       <Toaster />
 
       {/* ── Sidebar ── */}
@@ -186,6 +244,7 @@ function App() {
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <ScreenContent screen={screen} params={params} onNavigate={navigate} />
+      </div>
       </div>
     </div>
   );

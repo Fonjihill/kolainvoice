@@ -1,6 +1,7 @@
 pub mod catalogue;
 pub mod clients;
 pub mod invoices;
+pub mod license;
 pub mod payments;
 pub mod quotes;
 pub mod settings;

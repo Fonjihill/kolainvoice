@@ -1,5 +1,6 @@
 mod commands;
 mod database;
+mod license;
 mod models;
 mod pdf;
 
@@ -61,6 +62,8 @@ pub fn run() {
             commands::payments::get_payments_for_invoice,
             commands::payments::create_payment,
             commands::payments::delete_payment,
+            commands::license::get_license_status,
+            commands::license::activate_license,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

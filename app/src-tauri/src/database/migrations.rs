@@ -12,6 +12,7 @@ const MIGRATIONS: &[(i32, &str, &str)] = &[
     (7, "007_quote_invoice_link", include_str!("sql/007_quote_invoice_link.sql")),
     (8, "008_payments", include_str!("sql/008_payments.sql")),
     (9, "009_client_anonyme", include_str!("sql/009_client_anonyme.sql")),
+    (10, "010_license", include_str!("sql/010_license.sql")),
 ];
 
 /// Returns the current schema version (0 if no migrations have run yet).

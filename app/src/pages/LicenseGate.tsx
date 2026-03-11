@@ -63,8 +63,8 @@ function LicenseGate({ onActivated }: Props) {
 
   function handleKeyChange(e: React.ChangeEvent<HTMLInputElement>) {
     const formatted = formatKeyInput(e.target.value);
-    // Limit total length: KOLA-XXXXX-XXXXX-XXXXX-XXXXX = 29 chars
-    setLicenseKey(formatted.slice(0, 29));
+    // Limit total length: KOLA-XXXXX-XXXXX-XXXXX-XXXXX-XXXX = 33 chars
+    setLicenseKey(formatted.slice(0, 33));
   }
 
   async function handleActivate(e: React.FormEvent) {
@@ -214,7 +214,7 @@ function LicenseGate({ onActivated }: Props) {
                 type="text"
                 value={licenseKey}
                 onChange={handleKeyChange}
-                placeholder="KOLA-XXXXX-XXXXX-XXXXX-XXXXX"
+                placeholder="KOLA-XXXXX-XXXXX-XXXXX-XXXXX-XXXX"
                 className="flex-1 bg-stone-900 border border-stone-600 rounded px-3 py-2.5 text-[13px] font-mono text-white placeholder:text-stone-600 focus:outline-none focus:border-amber-500 transition-colors"
               />
               <button

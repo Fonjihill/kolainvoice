@@ -15,14 +15,17 @@ import {
   HardDrive,
   RefreshCw,
   Globe,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
+import { useLicense } from "../hooks/useLicense";
 
 const TABS: { key: string; icon: LucideIcon; label: string }[] = [
   { key: "entreprise", icon: Building2, label: "Entreprise" },
   { key: "factures", icon: Receipt, label: "Factures" },
   { key: "tva", icon: BarChart3, label: "TVA" },
   { key: "impression", icon: Printer, label: "Impression" },
+  { key: "licence", icon: ShieldCheck, label: "Licence" },
   { key: "sauvegarde", icon: HardDrive, label: "Sauvegarde" },
   { key: "mises-a-jour", icon: RefreshCw, label: "Mises a jour" },
   { key: "langue", icon: Globe, label: "Langue" },
@@ -118,6 +121,7 @@ function Settings() {
             )}
             {tab === "tva" && <TVAPanel form={form} update={update} />}
             {tab === "impression" && <ImpressionPanel form={form} update={update} />}
+            {tab === "licence" && <LicencePanel />}
             {tab === "sauvegarde" && <SauvegardePanel form={form} update={update} counts={counts} />}
             {tab === "mises-a-jour" && <MisesAJourPanel form={form} update={update} />}
             {tab === "langue" && <LanguePanel form={form} update={update} />}
@@ -479,6 +483,131 @@ function MisesAJourPanel({ form, update }: PanelProps) {
           </div>
         </div>
       ))}
+    </>
+  );
+}
+
+function LicencePanel() {
+  const { status, loading, fetch, activate } = useLicense();
+  const [newKey, setNewKey] = useState("");
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const toast = useToast();
+
+  useEffect(() => { fetch(); }, [fetch]);
+
+  const isActive = status?.state === "active";
+  const isTrial = status?.state === "trial";
+  const isExpired = status?.state === "expired";
+
+  async function handleCopyDeviceId() {
+    if (!status?.device_id) return;
+    await navigator.clipboard.writeText(status.device_id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleActivate() {
+    if (!newKey.trim()) return;
+    setKeyError(null);
+    try {
+      await activate(newKey.trim());
+      toast.show("Licence activee avec succes !");
+      setNewKey("");
+    } catch (e) {
+      setKeyError(String(e));
+    }
+  }
+
+  return (
+    <>
+      <div className="section-title">Statut de la licence</div>
+
+      {/* Status badge */}
+      <div className={`p-4 rounded mb-5 border ${
+        isActive ? "bg-green-50 border-green-500" :
+        isTrial ? "bg-amber-50 border-amber-500" :
+        "bg-red-50 border-red-500"
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className={`text-[14px] font-bold ${
+              isActive ? "text-green-700" : isTrial ? "text-amber-700" : "text-red-700"
+            }`}>
+              {isActive ? "Licence active" : isTrial ? "Essai gratuit" : "Licence expiree"}
+            </div>
+            {status?.plan && (
+              <div className="text-[12px] text-stone-600 mt-0.5">
+                Plan : {status.plan}
+              </div>
+            )}
+          </div>
+          <div className={`text-[22px] font-bold font-mono ${
+            isActive ? "text-green-600" : isTrial ? "text-amber-600" : "text-red-600"
+          }`}>
+            {status?.days_remaining ?? 0}j
+          </div>
+        </div>
+        {status?.expiry_date && (
+          <div className="text-[11px] text-stone-500 mt-2">
+            Expire le : {status.expiry_date}
+          </div>
+        )}
+        {isTrial && status?.trial_days_remaining !== null && (
+          <div className="text-[11px] text-amber-600 mt-2">
+            {status.trial_days_remaining} jour{(status.trial_days_remaining ?? 0) > 1 ? "s" : ""} d'essai restant{(status.trial_days_remaining ?? 0) > 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+
+      {/* Device ID */}
+      <div className="section-title">Device ID</div>
+      <div className="flex items-center gap-2 bg-stone-100 border border-stone-200 rounded px-3 py-2.5 mb-5">
+        <code className="flex-1 font-mono text-[13px] text-stone-700 select-all">
+          {status?.device_id ?? "..."}
+        </code>
+        <button
+          type="button"
+          onClick={handleCopyDeviceId}
+          className="text-[12px] text-amber-600 hover:text-amber-700 cursor-pointer font-semibold"
+        >
+          {copied ? "Copie !" : "Copier"}
+        </button>
+      </div>
+
+      {/* Change license */}
+      <div className="section-title">
+        {isActive ? "Changer de licence" : "Activer une licence"}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={newKey}
+          onChange={(e) => {
+            const clean = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            if (clean.length <= 4) { setNewKey(clean); return; }
+            const prefix = clean.slice(0, 4);
+            const rest = clean.slice(4);
+            const chunks: string[] = [prefix];
+            for (let i = 0; i < rest.length; i += 5) chunks.push(rest.slice(i, i + 5));
+            setNewKey(chunks.join("-").slice(0, 33));
+          }}
+          placeholder="KOLA-XXXXX-XXXXX-XXXXX-XXXXX-XXXX"
+          className="flex-1 form-input font-mono"
+        />
+        <button
+          onClick={handleActivate}
+          disabled={loading || !newKey.trim()}
+          className="btn-primary disabled:opacity-50"
+        >
+          Activer
+        </button>
+      </div>
+      {keyError && (
+        <div className="mt-2 text-red-600 text-[12px] bg-red-50 border border-red-500 rounded px-3 py-2">
+          {keyError}
+        </div>
+      )}
     </>
   );
 }

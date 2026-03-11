@@ -106,6 +106,19 @@ function App() {
     }
   }, [needsOnboarding]);
 
+  // After license check, if update_auto_check is enabled, check for updates silently
+  useEffect(() => {
+    if (needsOnboarding === false && (licenseState === "trial" || licenseState === "active")) {
+      getSettings().then((s) => {
+        if (s.update_auto_check) {
+          import("@tauri-apps/plugin-updater").then(({ check }) => {
+            check().catch(() => {}); // Silent, no-op if offline
+          });
+        }
+      });
+    }
+  }, [needsOnboarding, licenseState]);
+
   function navigate(target: string, p?: Record<string, unknown>) {
     setScreen(target as Screen);
     setParams(p ?? {});

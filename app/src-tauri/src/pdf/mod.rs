@@ -49,22 +49,31 @@ fn load_mono_family() -> Result<genpdf::fonts::FontFamily<FontData>, String> {
 
 // ── Helpers ─────────────────────────────────────
 
-fn fmt_fcfa(amount: i64) -> String {
+fn thousand_sep_char(separator: &str) -> char {
+    match separator {
+        "dot" => '.',
+        _ => '\u{00A0}', // non-breaking space (default)
+    }
+}
+
+fn fmt_fcfa_with(amount: i64, separator: &str) -> String {
+    let sep = thousand_sep_char(separator);
     let s = amount.abs().to_string();
     let mut result = String::new();
     for (i, c) in s.chars().rev().enumerate() {
-        if i > 0 && i % 3 == 0 { result.push('\u{00A0}'); }
+        if i > 0 && i % 3 == 0 { result.push(sep); }
         result.push(c);
     }
     let formatted: String = result.chars().rev().collect();
     if amount < 0 { format!("-{} FCFA", formatted) } else { format!("{} FCFA", formatted) }
 }
 
-fn fmt_number(n: i64) -> String {
+fn fmt_number_with(n: i64, separator: &str) -> String {
+    let sep = thousand_sep_char(separator);
     let s = n.abs().to_string();
     let mut result = String::new();
     for (i, c) in s.chars().rev().enumerate() {
-        if i > 0 && i % 3 == 0 { result.push('\u{00A0}'); }
+        if i > 0 && i % 3 == 0 { result.push(sep); }
         result.push(c);
     }
     let formatted: String = result.chars().rev().collect();
@@ -75,11 +84,14 @@ fn fmt_qty(q: f64) -> String {
     if q.fract() == 0.0 { format!("{}", q as i64) } else { format!("{:.2}", q) }
 }
 
-fn format_date(date: &str) -> String {
+fn format_date_with(date: &str, date_format: &str) -> String {
     if date.len() >= 10 {
         let parts: Vec<&str> = date[..10].split('-').collect();
         if parts.len() == 3 {
-            return format!("{}/{}/{}", parts[2], parts[1], parts[0]);
+            return match date_format {
+                "MM/DD/YYYY" => format!("{}/{}/{}", parts[1], parts[2], parts[0]),
+                _ => format!("{}/{}/{}", parts[2], parts[1], parts[0]), // DD/MM/YYYY (default)
+            };
         }
     }
     date.to_string()
@@ -233,13 +245,30 @@ fn generate_pdf(
     let mut doc = genpdf::Document::new(font_family);
     let mono_ref = doc.add_font_family(mono_family);
 
-    doc.set_paper_size(Size::new(210, 297));
+    // Paper format from settings: "Letter" = 216x279mm, default "A4" = 210x297mm
+    let paper_size = match settings.paper_format.as_str() {
+        "Letter" => Size::new(216, 279),
+        _ => Size::new(210, 297), // A4
+    };
+    doc.set_paper_size(paper_size);
     doc.set_font_size(9);
     doc.set_line_spacing(1.3);
+
+    // TODO: pdf_watermark_draft — genpdf does not natively support watermarks (rotated
+    // semi-transparent text behind content). A proper implementation would require a
+    // post-processing step with a PDF manipulation crate (e.g. lopdf) to inject a
+    // "BROUILLON" watermark on each page when data.status == "draft" && settings.pdf_watermark_draft.
 
     let mut decorator = genpdf::SimplePageDecorator::new();
     decorator.set_margins(Margins::trbl(15, 18, 15, 18));
     doc.set_page_decorator(decorator);
+
+    // Local helpers that use settings
+    let sep = &settings.thousand_separator;
+    let dfmt = &settings.date_format;
+    let fmt_fcfa = |amount: i64| fmt_fcfa_with(amount, sep);
+    let fmt_number = |n: i64| fmt_number_with(n, sep);
+    let format_date = |date: &str| format_date_with(date, dfmt);
 
     let s_mono = Style::from(mono_ref).with_font_size(9);
     let s_mono_bold = Style::from(mono_ref).with_font_size(9).bold();
@@ -742,13 +771,22 @@ pub fn generate_receipt_pdf(
     let mut doc = genpdf::Document::new(font_family);
     let mono_ref = doc.add_font_family(mono_family);
 
-    doc.set_paper_size(Size::new(210, 297));
+    // Paper format from settings
+    let paper_size = match settings.paper_format.as_str() {
+        "Letter" => Size::new(216, 279),
+        _ => Size::new(210, 297), // A4
+    };
+    doc.set_paper_size(paper_size);
     doc.set_font_size(9);
     doc.set_line_spacing(1.3);
 
     let mut decorator = genpdf::SimplePageDecorator::new();
     decorator.set_margins(Margins::trbl(15, 18, 15, 18));
     doc.set_page_decorator(decorator);
+
+    // Local helpers that use settings
+    let sep = &settings.thousand_separator;
+    let fmt_fcfa = |amount: i64| fmt_fcfa_with(amount, sep);
 
     let s_mono = Style::from(mono_ref).with_font_size(9);
     let s_mono_bold = Style::from(mono_ref).with_font_size(10).bold();

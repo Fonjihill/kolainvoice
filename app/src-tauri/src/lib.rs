@@ -26,6 +26,8 @@ pub fn run() {
             commands::get_data_counts,
             commands::copy_image_to_app_data,
             commands::open_file,
+            commands::export_database,
+            commands::restore_database,
             commands::generate_document_pdf,
             commands::settings::get_settings,
             commands::settings::save_settings,

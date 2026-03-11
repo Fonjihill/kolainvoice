@@ -3,8 +3,8 @@ import { useSettings } from "../hooks/useSettings";
 import { useToast } from "../hooks/useToast";
 import { Topbar } from "../App";
 import type { SaveSettingsPayload } from "../api/settings";
-import { getDataCounts, type DataCounts } from "../api/settings";
-import { open } from "@tauri-apps/plugin-dialog";
+import { getDataCounts, exportDatabase, restoreDatabase, type DataCounts } from "../api/settings";
+import { open, save, ask } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import {
@@ -411,6 +411,42 @@ function ImpressionPanel({ form, update }: PanelProps) {
 }
 
 function SauvegardePanel({ form, update, counts }: PanelProps & { counts: DataCounts | null }) {
+  const toast = useToast();
+
+  async function handleExport() {
+    try {
+      const dest = await save({
+        defaultPath: "kola-invoice.db",
+        filters: [{ name: "SQLite Database", extensions: ["db"] }],
+      });
+      if (!dest) return;
+      await exportDatabase(dest);
+      toast.show("Base de donnees exportee avec succes");
+    } catch (e) {
+      toast.show(`Erreur export : ${e}`, "error");
+    }
+  }
+
+  async function handleRestore() {
+    try {
+      const confirmed = await ask(
+        "Cette action remplacera toutes les donnees actuelles par celles du fichier selectionne. Une sauvegarde de la base actuelle sera creee automatiquement.\n\nContinuer ?",
+        { title: "Confirmer la restauration", kind: "warning" },
+      );
+      if (!confirmed) return;
+
+      const source = await open({
+        multiple: false,
+        filters: [{ name: "SQLite Database", extensions: ["db"] }],
+      });
+      if (!source) return;
+      await restoreDatabase(source);
+      toast.show("Base de donnees restauree. Veuillez relancer l'application.");
+    } catch (e) {
+      toast.show(`Erreur restauration : ${e}`, "error");
+    }
+  }
+
   return (
     <>
       <div className="section-title">Gestion des donnees</div>
@@ -430,14 +466,14 @@ function SauvegardePanel({ form, update, counts }: PanelProps & { counts: DataCo
           <div className="text-[12px] text-stone-500 mb-3">
             Copie complete des donnees
           </div>
-          <button className="btn-primary flex items-center gap-1.5"><HardDrive size={14} /> Exporter .db</button>
+          <button className="btn-primary flex items-center gap-1.5" onClick={handleExport}><HardDrive size={14} /> Exporter .db</button>
         </div>
         <div>
           <div className="text-[13px] font-semibold mb-1.5">Restaurer</div>
           <div className="text-[12px] text-stone-500 mb-3">
             Importe un fichier .db precedent
           </div>
-          <button className="btn-danger">⚠ Restaurer</button>
+          <button className="btn-danger" onClick={handleRestore}>Restaurer</button>
         </div>
       </div>
       <div className="section-title">Options</div>

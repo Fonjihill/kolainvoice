@@ -93,6 +93,51 @@ pub fn open_file(path: String) -> Result<(), String> {
     open::that(&path).map_err(|e| format!("Failed to open file: {e}"))
 }
 
+/// Export the database file to a user-chosen location.
+#[tauri::command]
+pub fn export_database(app: tauri::AppHandle, destination: String) -> Result<(), String> {
+    let db = crate::database::db_path(&app)?;
+    if !db.exists() {
+        return Err("Database file not found".to_string());
+    }
+    std::fs::copy(&db, &destination)
+        .map_err(|e| format!("Export failed: {e}"))?;
+    Ok(())
+}
+
+/// Restore a database from a user-chosen .db file.
+/// Validates the file is a valid SQLite database, backs up the current one, then copies it over.
+#[tauri::command]
+pub fn restore_database(app: tauri::AppHandle, source: String) -> Result<(), String> {
+    let source_path = std::path::Path::new(&source);
+    if !source_path.exists() {
+        return Err("Source file not found".to_string());
+    }
+
+    // Validate it's a valid SQLite file by trying to open it
+    {
+        let test_conn = rusqlite::Connection::open(source_path)
+            .map_err(|e| format!("Invalid database file: {e}"))?;
+        // Check we can read a basic query
+        test_conn
+            .query_row("SELECT COUNT(*) FROM sqlite_master", [], |_row| Ok(()))
+            .map_err(|e| format!("Invalid database file: {e}"))?;
+    }
+
+    let db = crate::database::db_path(&app)?;
+
+    // Backup current database
+    if db.exists() {
+        crate::database::backup_database(&db)?;
+    }
+
+    // Copy the source over the current database
+    std::fs::copy(source_path, &db)
+        .map_err(|e| format!("Restore failed: {e}"))?;
+
+    Ok(())
+}
+
 /// Generate a PDF for an invoice or quote. Returns raw PDF bytes.
 #[tauri::command]
 pub fn generate_document_pdf(

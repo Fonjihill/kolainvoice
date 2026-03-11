@@ -173,14 +173,29 @@ pub fn create_invoice(
     conn: &mut Connection,
     payload: &CreateInvoicePayload,
 ) -> Result<InvoiceDetail, String> {
-    // Get prefix from settings
-    let prefix: String = conn
-        .query_row("SELECT invoice_prefix FROM settings WHERE id = 1", [], |r| {
-            r.get(0)
+    // Get prefix and payment_days from settings
+    let (prefix, payment_days): (String, i64) = conn
+        .query_row("SELECT invoice_prefix, payment_days FROM settings WHERE id = 1", [], |r| {
+            Ok((r.get(0)?, r.get(1)?))
         })
         .map_err(|e| format!("Settings error: {e}"))?;
 
     let number = next_invoice_number(conn, &prefix)?;
+
+    // Auto-calculate due_date if not provided
+    let due_date = match &payload.due_date {
+        Some(d) if !d.is_empty() => Some(d.clone()),
+        _ => {
+            let calculated: String = conn
+                .query_row(
+                    "SELECT date(?1, '+' || ?2 || ' days')",
+                    params![payload.issue_date, payment_days],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Date calc error: {e}"))?;
+            Some(calculated)
+        }
+    };
 
     let tx = conn.transaction().map_err(|e| format!("Transaction error: {e}"))?;
 
@@ -191,7 +206,7 @@ pub fn create_invoice(
         "INSERT INTO invoices (number, client_id, status, issue_date, due_date, payment_method, notes,
                                subtotal, tva_amount, total)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, 0, 0)",
-        params![number, payload.client_id, status, payload.issue_date, payload.due_date, payload.payment_method, payload.notes],
+        params![number, payload.client_id, status, payload.issue_date, due_date, payload.payment_method, payload.notes],
     )
     .map_err(|e| format!("Insert error: {e}"))?;
 

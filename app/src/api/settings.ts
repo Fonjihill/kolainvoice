@@ -63,3 +63,11 @@ export interface DataCounts {
 export async function getDataCounts(): Promise<DataCounts> {
   return invoke<DataCounts>("get_data_counts");
 }
+
+export async function exportDatabase(destination: string): Promise<void> {
+  return invoke<void>("export_database", { destination });
+}
+
+export async function restoreDatabase(source: string): Promise<void> {
+  return invoke<void>("restore_database", { source });
+}

@@ -172,13 +172,29 @@ pub fn create_quote(
     conn: &mut Connection,
     payload: &CreateQuotePayload,
 ) -> Result<QuoteDetail, String> {
-    let prefix: String = conn
-        .query_row("SELECT quote_prefix FROM settings WHERE id = 1", [], |r| {
-            r.get(0)
+    // Get prefix and quote_validity_days from settings
+    let (prefix, validity_days): (String, i64) = conn
+        .query_row("SELECT quote_prefix, quote_validity_days FROM settings WHERE id = 1", [], |r| {
+            Ok((r.get(0)?, r.get(1)?))
         })
         .map_err(|e| format!("Settings error: {e}"))?;
 
     let number = next_quote_number(conn, &prefix)?;
+
+    // Auto-calculate validity_date if not provided
+    let validity_date = match &payload.validity_date {
+        Some(d) if !d.is_empty() => Some(d.clone()),
+        _ => {
+            let calculated: String = conn
+                .query_row(
+                    "SELECT date(?1, '+' || ?2 || ' days')",
+                    params![payload.issue_date, validity_days],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Date calc error: {e}"))?;
+            Some(calculated)
+        }
+    };
 
     let tx = conn.transaction().map_err(|e| format!("Transaction error: {e}"))?;
 
@@ -187,7 +203,7 @@ pub fn create_quote(
         "INSERT INTO quotes (number, client_id, object, status, issue_date, validity_date, notes,
                              subtotal, tva_amount, total)
          VALUES (?1, ?2, ?3, 'draft', ?4, ?5, ?6, 0, 0, 0)",
-        params![number, payload.client_id, payload.object, payload.issue_date, payload.validity_date, payload.notes],
+        params![number, payload.client_id, payload.object, payload.issue_date, validity_date, payload.notes],
     )
     .map_err(|e| format!("Insert error: {e}"))?;
 
@@ -364,12 +380,20 @@ pub fn duplicate_quote(conn: &mut Connection, id: i64) -> Result<QuoteDetail, St
 
     let number = next_quote_number(conn, &prefix)?;
 
+    let validity_days: i64 = conn
+        .query_row("SELECT quote_validity_days FROM settings WHERE id = 1", [], |r| r.get(0))
+        .map_err(|e| format!("Settings error: {e}"))?;
+
     let today: String = conn
         .query_row("SELECT date('now')", [], |row| row.get(0))
         .map_err(|e| format!("Date error: {e}"))?;
 
     let validity: String = conn
-        .query_row("SELECT date('now', '+30 days')", [], |row| row.get(0))
+        .query_row(
+            "SELECT date('now', '+' || ?1 || ' days')",
+            params![validity_days],
+            |row| row.get(0),
+        )
         .map_err(|e| format!("Date error: {e}"))?;
 
     let tx = conn.transaction().map_err(|e| format!("Transaction error: {e}"))?;
@@ -417,8 +441,10 @@ pub fn convert_to_invoice(conn: &mut Connection, id: i64) -> Result<i64, String>
         return Err("Ce devis a déjà été converti en facture".to_string());
     }
 
-    let prefix: String = conn
-        .query_row("SELECT invoice_prefix FROM settings WHERE id = 1", [], |r| r.get(0))
+    let (prefix, payment_days): (String, i64) = conn
+        .query_row("SELECT invoice_prefix, payment_days FROM settings WHERE id = 1", [], |r| {
+            Ok((r.get(0)?, r.get(1)?))
+        })
         .map_err(|e| format!("Settings error: {e}"))?;
 
     let year = conn
@@ -443,7 +469,11 @@ pub fn convert_to_invoice(conn: &mut Connection, id: i64) -> Result<i64, String>
         .map_err(|e| format!("Date error: {e}"))?;
 
     let due_date: String = tx
-        .query_row("SELECT date('now', '+30 days')", [], |row| row.get(0))
+        .query_row(
+            "SELECT date('now', '+' || ?1 || ' days')",
+            params![payment_days],
+            |row| row.get(0),
+        )
         .map_err(|e| format!("Date error: {e}"))?;
 
     tx.execute(

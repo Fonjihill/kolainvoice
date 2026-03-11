@@ -15,7 +15,7 @@ use tauri::Manager;
 const DB_FILENAME: &str = "kola-invoice.db";
 
 /// Resolve the database file path inside the platform app data directory.
-fn db_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+pub fn db_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
         .app_data_dir()
@@ -28,7 +28,7 @@ fn db_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 }
 
 /// Create a timestamped backup of the database file (before migrations).
-fn backup_database(path: &Path) -> Result<(), String> {
+pub fn backup_database(path: &Path) -> Result<(), String> {
     if !path.exists() {
         return Ok(()); // Nothing to back up
     }
